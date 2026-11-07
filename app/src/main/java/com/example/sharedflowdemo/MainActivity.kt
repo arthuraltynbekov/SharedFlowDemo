@@ -1,5 +1,7 @@
 package com.example.sharedflowdemo
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.repeatOnLifecycle
+
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import android.os.Bundle
@@ -54,11 +56,13 @@ fun MainScreen(
     val messages = remember { mutableStateListOf<Int>()}
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(key1 = Unit) {
-        sharedFlow.collect {
-            messages.add(it)
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) {
+            sharedFlow.collect {
+                println("Collecting $it")
+                messages.add(it)
+            }
         }
     }
-
     LazyColumn(modifier = modifier) {
         items(messages) {
             Text(
