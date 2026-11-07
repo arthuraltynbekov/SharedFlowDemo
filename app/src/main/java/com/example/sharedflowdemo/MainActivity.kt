@@ -1,5 +1,7 @@
 package com.example.sharedflowdemo
-
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -13,6 +15,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import com.example.sharedflowdemo.ui.theme.SharedFlowDemoTheme
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.flow.SharedFlow
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,10 +44,30 @@ fun ScreenSetup(
     modifier: Modifier = Modifier,
     viewModel: DemoViewModel = viewModel()
 ) {
-    MainScreen(modifier)
+    MainScreen(modifier, viewModel.sharedFlow)
 }
 @Composable
-fun MainScreen(modifier: Modifier = Modifier) {
+fun MainScreen(
+    modifier: Modifier = Modifier,
+    sharedFlow: SharedFlow<Int>
+) {
+    val messages = remember { mutableStateListOf<Int>()}
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(key1 = Unit) {
+        sharedFlow.collect {
+            messages.add(it)
+        }
+    }
+
+    LazyColumn(modifier = modifier) {
+        items(messages) {
+            Text(
+                "Collected Value = $it",
+                style = MaterialTheme.typography.headlineLarge,
+                modifier = Modifier.padding(5.dp)
+            )
+        }
+    }
 }
 
 
@@ -45,6 +75,7 @@ fun MainScreen(modifier: Modifier = Modifier) {
 @Composable
 fun GreetingPreview() {
     SharedFlowDemoTheme {
-
+        val viewModel: DemoViewModel = viewModel()
+        MainScreen(sharedFlow = viewModel.sharedFlow)
     }
 }
